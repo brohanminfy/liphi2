@@ -20,7 +20,6 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
       setLoading(false);
@@ -29,50 +28,52 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  // Signup function
-  const signup = async (username, email, password) => {
-    try {
-      setError('');
-      // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+ const signup = async (username, email, password) => {
+  try {
+    setError('');
+    
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-      // 2. Update profile with username
-      await updateProfile(user, {
-        displayName: username
-      });
+    await updateProfile(user, { displayName: username });
 
-      // 3. Send user data to backend
-      const response = await axios.post('http://localhost:3000/api/auth/signup', {
-        uid: user.uid,
-        username,
-        email,
-      });
+    const response = await axios.post('http://localhost:5000/api/auth/signup', {
+      uid: user.uid,
+      username,
+      email,
+    });
 
-      // 4. Store user data
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      setCurrentUser(user);
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      return response.data;
-    } catch (error) {
-      console.error('Signup error:', error);
-      setError(error.message);
-      throw error;
+    setCurrentUser(user);
+    return response.data;
+  } catch (error) {
+    console.error('Signup error:', error);
+
+    if (auth.currentUser) {
+      await auth.currentUser.delete();
     }
-  };
+
+    setError(error.message);
+    throw error;
+  }
+};
+
 
   // Login function
   const login = async (email, password) => {
     try {
       setError('');
       // 1. Firebase Authentication
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       // 2. Backend Authentication
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         uid: user.uid,
-        email,
+        email:email,
       });
 
       // 3. Store user data

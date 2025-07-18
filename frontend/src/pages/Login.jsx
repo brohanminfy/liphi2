@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '../Firebase/firebase'
-import axios from 'axios'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
+  const { login } = useAuth()
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
 
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const [textStyles, setTextStyles] = useState({
     bold: false,
@@ -20,6 +21,21 @@ export default function Login() {
     font: 'sans-serif',
   })
 
+  const colors = ['#1f2937', 'red', 'blue', 'green', 'orange']
+  const fonts = ['sans-serif', 'serif', 'monospace', 'cursive']
+
+  const cycleColor = () => {
+    const currentIndex = colors.indexOf(textStyles.color)
+    const nextColor = colors[(currentIndex + 1) % colors.length]
+    setTextStyles((prev) => ({ ...prev, color: nextColor }))
+  }
+
+  const cycleFont = () => {
+    const currentIndex = fonts.indexOf(textStyles.font)
+    const nextFont = fonts[(currentIndex + 1) % fonts.length]
+    setTextStyles((prev) => ({ ...prev, font: nextFont }))
+  }
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
@@ -27,40 +43,17 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     const { email, password } = formData
 
     try {
-      // 1. Firebase login
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user
-
-      // 2. Backend authentication and data fetch
-      try {
-        const response = await axios.post('http://localhost:3000/api/auth/login', {
-          uid: user.uid,
-          email,
-        })
-
-        console.log('Login successful:', response.data)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        
-        // Redirect to dashboard
-        window.location.href = '/dashboard'
-        window.location.href = '/' // or use navigate if you're using react-router
-      } catch (backendError) {
-        console.error('Backend error:', backendError)
-        if (backendError.response) {
-          setError(backendError.response.data.error || 'Error connecting to server')
-        } else if (backendError.request) {
-          setError('No response from server. Please try again.')
-        } else {
-          setError('Error setting up request. Please try again.')
-        }
-      }
-    } catch (firebaseError) {
-      console.error('Firebase error:', firebaseError)
-      setError(firebaseError.message)
+      await login(email, password)
+      window.location.href = '/dashboard'
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -69,6 +62,7 @@ export default function Login() {
     ${textStyles.italic ? 'italic' : ''}
     ${textStyles.strike ? 'line-through' : ''}
   `
+
   const inlineStyle = {
     color: textStyles.color,
     fontFamily: textStyles.font,
@@ -76,8 +70,17 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#f7f8fa] to-[#e4e7eb] flex items-center justify-center px-4 py-16">
+      {/* Overlay Spinner */}
+      {loading && (
+        <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-lg">
+          <div className="animate-pulse text-gray-800 text-lg font-medium">
+            Logging in...
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/70 backdrop-blur-md border border-gray-200 shadow-lg rounded-xl px-5 py-3 flex flex-wrap items-center gap-3">
+      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 bg-white/70 backdrop-blur-md border border-gray-200 shadow-lg rounded-xl px-5 py-3 flex flex-wrap items-center gap-3">
         <div className="flex gap-2">
           <button
             onClick={() => setTextStyles((prev) => ({ ...prev, bold: !prev.bold }))}
@@ -103,29 +106,25 @@ export default function Login() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs">Color</label>
-          <input
-            type="color"
-            value={textStyles.color}
-            onChange={(e) => setTextStyles((prev) => ({ ...prev, color: e.target.value }))}
-            className="w-6 h-6 cursor-pointer"
-            title="Text Color"
-          />
+          <button
+            onClick={cycleColor}
+            className="px-3 py-1 text-xs rounded-md border bg-white hover:bg-gray-100"
+            title="Toggle Text Color"
+            style={{ color: textStyles.color }}
+          >
+            Color
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs">Font</label>
-          <select
-            value={textStyles.font}
-            onChange={(e) => setTextStyles((prev) => ({ ...prev, font: e.target.value }))}
-            className="text-xs px-2 py-1 border rounded-md"
-            title="Font Style"
+          <button
+            onClick={cycleFont}
+            className="px-3 py-1 text-xs rounded-md border bg-white hover:bg-gray-100"
+            title="Toggle Font Style"
+            style={{ fontFamily: textStyles.font }}
           >
-            <option value="sans-serif">Sans</option>
-            <option value="serif">Serif</option>
-            <option value="monospace">Mono</option>
-            <option value="cursive">Cursive</option>
-          </select>
+            Font
+          </button>
         </div>
       </div>
 
@@ -173,14 +172,19 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-gray-900 text-black py-2 rounded-lg font-medium hover:bg-gray-800 transition"
+            disabled={loading}
+            className={`w-full py-2 rounded-lg font-medium transition ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-gray-950 text-black hover:bg-gray-800'
+            }`}
           >
-            Log In
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 
         <p className={`text-sm text-center mt-6 ${styleClass}`} style={inlineStyle}>
-          Don't have an account?{' '}
+          Don’t have an account?{' '}
           <Link to="/signup" className="underline hover:text-black">
             Sign up
           </Link>

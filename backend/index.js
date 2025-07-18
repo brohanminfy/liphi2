@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import './FirebaseAdmin/fireadmin.js';
 import authRoutes from './Routers/fireauth.js';
+import docRouter from './Routers/docRouter.js';
 
 dotenv.config();
 
@@ -27,13 +28,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Test route to verify server is running
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/documents', docRouter);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

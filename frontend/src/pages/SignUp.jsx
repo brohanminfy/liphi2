@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { auth } from '../Firebase/firebase'
-import axios from 'axios'
-
+import { useAuth } from '../context/AuthContext'
 
 export default function Signup() {
+
+  const { signup } = useAuth()
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -14,6 +13,7 @@ export default function Signup() {
   })
 
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const [textStyles, setTextStyles] = useState({
     bold: false,
@@ -27,60 +27,29 @@ export default function Signup() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  setError('') // Clear any previous errors
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
-  const { username, email, password, confirmPassword } = formData
+    const { username, email, password, confirmPassword } = formData
 
-  if (password !== confirmPassword) {
-    setError('Passwords do not match')
-    return
-  }
-
-  try {
-    // 1. Firebase signup
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-    const user = userCredential.user
-
-    // 2. Update Firebase profile with username
-    await updateProfile(user, {
-      displayName: username,
-    })
-
-    // 3. Send user data to your backend
-    try {
-      const response = await axios.post('http://localhost:3000/api/auth/signup', {
-        uid: user.uid,
-        username,
-        email,
-      })
-      
-      console.log('Signup successful:', response.data)
-      localStorage.setItem('user', JSON.stringify(response.data.user))
-      
-      // Redirect to dashboard
-      window.location.href = '/dashboard'
-    } catch (backendError) {
-      console.error('Backend error:', backendError)
-      if (backendError.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        setError(backendError.response.data.error || 'Error connecting to server')
-      } else if (backendError.request) {
-        // The request was made but no response was received
-        setError('No response from server. Please try again.')
-      } else {
-        // Something happened in setting up the request
-        setError('Error setting up request. Please try again.')
-      }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      setLoading(false)
+      return
     }
-  } catch (firebaseError) {
-    console.error('Firebase error:', firebaseError)
-    setError(firebaseError.message)
-  }
-}
 
+    try {
+      const response = await signup(username, email, password)
+      console.log('Signup successful:', response)
+      window.location.href = '/dashboard'
+    } catch (err) {
+      setError(err.message || 'Signup failed')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const styleClass = `
     ${textStyles.bold ? 'font-bold' : ''}
@@ -91,12 +60,34 @@ const handleSubmit = async (e) => {
     color: textStyles.color,
     fontFamily: textStyles.font,
   }
+const colors = ['#1f2937', 'red', 'blue', 'green', 'orange']
+const fonts = ['sans-serif', 'serif', 'monospace', 'cursive']
+
+const cycleColor = () => {
+  const currentIndex = colors.indexOf(textStyles.color)
+  const nextColor = colors[(currentIndex + 1) % colors.length]
+  setTextStyles((prev) => ({ ...prev, color: nextColor }))
+}
+
+const cycleFont = () => {
+  const currentIndex = fonts.indexOf(textStyles.font)
+  const nextFont = fonts[(currentIndex + 1) % fonts.length]
+  setTextStyles((prev) => ({ ...prev, font: nextFont }))
+}
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#f7f8fa] to-[#e4e7eb] flex items-center justify-center px-4 py-16">
+      {/* Overlay Loading Spinner */}
+      {loading && (
+        <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-lg">
+          <div className="animate-pulse text-gray-800 text-lg font-medium">
+            Creating your account...
+          </div>
+        </div>
+      )}
 
       {/* Toolbar */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-white/70 backdrop-blur-md border border-gray-200 shadow-lg rounded-xl px-5 py-3 flex flex-wrap items-center gap-3">
+      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-40 bg-white/70 backdrop-blur-md border border-gray-200 shadow-lg rounded-xl px-5 py-3 flex flex-wrap items-center gap-3">
         <div className="flex gap-2">
           <button
             onClick={() => setTextStyles((prev) => ({ ...prev, bold: !prev.bold }))}
@@ -120,32 +111,32 @@ const handleSubmit = async (e) => {
             <s>S</s>
           </button>
         </div>
-
         <div className="flex items-center gap-2">
-          <label className="text-xs">Color</label>
-          <input
-            type="color"
-            value={textStyles.color}
-            onChange={(e) => setTextStyles((prev) => ({ ...prev, color: e.target.value }))}
-            className="w-6 h-6 cursor-pointer"
-            title="Text Color"
-          />
-        </div>
+  <button
+    onClick={cycleColor}
+    className="px-3 py-1 text-xs rounded-md border bg-white hover:bg-gray-100"
+    title="Toggle Text Color"
+    style={{ color: textStyles.color }}
+  >
+    Color
+  </button>
+</div>
 
-        <div className="flex items-center gap-2">
-          <label className="text-xs">Font</label>
-          <select
-            value={textStyles.font}
-            onChange={(e) => setTextStyles((prev) => ({ ...prev, font: e.target.value }))}
-            className="text-xs px-2 py-1 border rounded-md"
-            title="Font Style"
-          >
-            <option value="sans-serif">Sans</option>
-            <option value="serif">Serif</option>
-            <option value="monospace">Mono</option>
-            <option value="cursive">Cursive</option>
-          </select>
-        </div>
+<div className="flex items-center gap-2">
+  <button
+    onClick={cycleFont}
+    className="px-3 py-1 text-xs rounded-md border bg-white hover:bg-gray-100"
+    title="Toggle Font Style"
+    style={{ fontFamily: textStyles.font }}
+  >
+    Font
+  </button>
+</div>
+
+
+       
+
+       
       </div>
 
       {/* Signup Card */}
@@ -173,7 +164,7 @@ const handleSubmit = async (e) => {
               value={formData.username}
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none"
-              placeholder="john_doe"
+              placeholder="Your username"
             />
           </div>
 
@@ -186,7 +177,7 @@ const handleSubmit = async (e) => {
               value={formData.email}
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none"
-              placeholder="you@example.com"
+              placeholder="example@gmail.com"
             />
           </div>
 
@@ -218,9 +209,14 @@ const handleSubmit = async (e) => {
 
           <button
             type="submit"
-            className="w-full bg-gray-900 text-black py-2 rounded-lg font-medium hover:bg-gray-800 transition"
+            disabled={loading}
+            className={`w-full py-2 rounded-lg font-medium transition ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-950 text-black hover:bg-gray-800'
+            }`}
           >
-            Create Account
+            {loading ? 'Signing Up...' : 'Create Account'}
           </button>
         </form>
 
