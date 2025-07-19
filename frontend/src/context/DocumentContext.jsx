@@ -55,15 +55,8 @@ export const DocumentProvider = ({ children }) => {
         error,
         fetchDocuments,
         createDocument,
-      error,
-        fetchDocuments,
-        createDocument,
-        createDocument,
-    error,
-        fetchDocuments,
-        createDocument,
         currentDocId,
-        setCurrentDocId // Provide this
+        setCurrentDocId
       }}
     >
       {children}

@@ -52,8 +52,8 @@ const Sidebar = () => {
   const renderDocs = (docs) =>
     docs.map((doc) => (
       <li
-        key={doc._id}
-        onClick={() => setCurrentDocId(doc.id)} // ✅ open on click
+        key={doc.id}
+        onClick={() => setCurrentDocId(doc.id)}
         className="text-sm px-3 py-1.5 rounded-md hover:bg-gray-100 transition cursor-pointer truncate"
         title={doc.title || 'Untitled'}
       >
