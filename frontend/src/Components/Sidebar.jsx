@@ -1,10 +1,14 @@
 import React from 'react';
 import { useDocuments } from '../context/DocumentContext';
-import { FileText, Edit, Eye, Plus } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { FileText, Edit, Eye, LogOut, Plus } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 
 const Sidebar = () => {
   const { documents, createDocument, setCurrentDocId } = useDocuments();
+  const { logout, userData } = useAuth();
+  
+  console.log('Sidebar documents:', documents);
 
   const token = localStorage.getItem('token');
   let userId = '';
@@ -32,28 +36,32 @@ const Sidebar = () => {
 
   const handleCreate = async () => {
     try {
+      console.log('Sidebar: Creating new document...');
       const newDoc = {
         title: 'Untitled Document',
         content: [],
         createdAt: new Date().toISOString(),
       };
       const created = await createDocument(newDoc);
-      console.log(created)
-      if (created?.id) {
-        console.log(created?._id)
-        setCurrentDocId(created.id); // ✅ open after creation
-      }
-      
+      console.log('Sidebar: Document created:', created);
     } catch (err) {
-      console.error('Error creating doc:', err.message);
+      console.error('Sidebar: Error creating doc:', err.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
   const renderDocs = (docs) =>
     docs.map((doc) => (
       <li
-        key={doc.id}
-        onClick={() => setCurrentDocId(doc.id)}
+        key={doc._id || doc.id}
+        onClick={() => setCurrentDocId(doc._id || doc.id)}
         className="text-sm px-3 py-1.5 rounded-md hover:bg-gray-100 transition cursor-pointer truncate"
         title={doc.title || 'Untitled'}
       >
@@ -102,6 +110,23 @@ const Sidebar = () => {
           View Only
         </h3>
         <ul className="space-y-1">{renderDocs(viewOnlyDocs)}</ul>
+      </div>
+
+      {/* Spacer to push logout to bottom */}
+      <div className="flex-1"></div>
+
+      {/* User info and logout */}
+      <div className="border-t border-gray-200 pt-4">
+        <div className="text-sm text-gray-600 mb-2">
+          {userData?.username || userData?.email || 'User'}
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Logout</span>
+        </button>
       </div>
     </aside>
   );

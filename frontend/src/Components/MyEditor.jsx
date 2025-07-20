@@ -6,6 +6,8 @@ import { useEffect, useState, useRef } from "react";
 import { useDocuments } from "../context/DocumentContext";
 import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../Firebase/firebase";
+import ShareDialog from "./ShareDialog";
+import axios from "axios"; // Added axios import
 
 // Default block structure for new documents
 const defaultContent = [
@@ -18,7 +20,7 @@ const defaultContent = [
 ];
 
 export default function MyEditor() {
-  const { currentDocId } = useDocuments();
+  const { currentDocId, updateDocumentTitle, updateDocumentInState } = useDocuments();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(defaultContent);
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,10 @@ export default function MyEditor() {
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const [pendingChanges, setPendingChanges] = useState(new Set());
   const [localStorageKey, setLocalStorageKey] = useState("");
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [userRole, setUserRole] = useState(null); // 'admin', 'editor', 'viewer'
+  const [isViewer, setIsViewer] = useState(false);
+  const [debouncedTitle, setDebouncedTitle] = useState("");
 
   // Block change tracking
   const changedBlocks = useRef(new Map()); // blockId -> { content, timestamp }
@@ -136,6 +142,19 @@ export default function MyEditor() {
       }
     }
   }, [localStorageKey]);
+
+  // Debounced title update to backend
+  useEffect(() => {
+    if (!currentDocId || !debouncedTitle.trim()) return;
+
+    const timeoutId = setTimeout(() => {
+      updateDocumentTitle(currentDocId, debouncedTitle).catch(error => {
+        console.error("❌ Error updating title in backend:", error);
+      });
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timeoutId);
+  }, [debouncedTitle, currentDocId]);
 
   // Handle content changes from BlockNote editor
   useEffect(() => {
@@ -393,25 +412,36 @@ export default function MyEditor() {
     
     setLoading(true);
     try {
-      const docRef = doc(db, "documents", docId);
-      const docSnap = await getDoc(docRef);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/documents/${docId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setTitle(data.title || "Untitled Document");
-        const documentContent = data.content && data.content.length > 0 ? data.content : defaultContent;
-        setContent(documentContent);
-        lastSavedContent.current = documentContent;
-        setIsDirty(false);
-        setLastSyncedAt(data.lastSyncedAt?.toDate() || new Date());
-      } else {
-        setTitle("Untitled Document");
-        setContent(defaultContent);
-        lastSavedContent.current = defaultContent;
-        setIsDirty(false);
-      }
+      const data = response.data;
+      setTitle(data.title || " ");
+      const documentContent = data.content && data.content.length > 0 ? data.content : defaultContent;
+      setContent(documentContent);
+      lastSavedContent.current = documentContent;
+      setIsDirty(false);
+      setLastSyncedAt(data.lastSyncedAt?.toDate() || new Date());
+      
+      // Set user role and viewer status
+      setUserRole(data.userRole);
+      setIsViewer(data.userRole === 'viewer');
+      
+      console.log("📥 Loaded initial content from Firestore:", documentContent.length, "blocks");
+      console.log("👤 User role:", data.userRole);
     } catch (error) {
       console.error("Error fetching document:", error);
+      // Fallback to default content
+      setTitle(" ");
+      setContent(defaultContent);
+      lastSavedContent.current = defaultContent;
+      setIsDirty(false);
+      setUserRole('admin'); // Default to admin for fallback
+      setIsViewer(false);
     } finally {
       setLoading(false);
     }
@@ -470,7 +500,7 @@ export default function MyEditor() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (JSON.stringify(data.content) !== JSON.stringify(content)) {
-          setTitle(data.title || "Untitled Document");
+          setTitle(data.title || " ");
           const documentContent = data.content && data.content.length > 0 ? data.content : defaultContent;
           setContent(documentContent);
           lastSavedContent.current = documentContent;
@@ -495,6 +525,7 @@ export default function MyEditor() {
     const newTitle = e.target.value;
     console.log("📝 Title changed to:", newTitle);
     setTitle(newTitle);
+    setDebouncedTitle(newTitle); // For debounced backend update
     setIsDirty(true);
     
     // Add title to pending changes for sync
@@ -507,6 +538,12 @@ export default function MyEditor() {
       content: newTitle,
       timestamp: Date.now()
     });
+    
+    // Immediately update the sidebar via context state
+    if (currentDocId) {
+      updateDocumentInState(currentDocId, { title: newTitle });
+      console.log("✅ Title immediately updated in sidebar state");
+    }
     
     console.log("🎯 Title change added to pending changes");
   };
@@ -544,11 +581,17 @@ export default function MyEditor() {
             onChange={handleTitleChange}
             className="text-2xl font-bold focus:outline-none flex-1"
             placeholder="Document Title"
+            disabled={isViewer} // Disable title editing for viewers
           />
           <div className="ml-4 flex items-center space-x-2">
             {!isOnline && (
               <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
                 🔴 Offline
+              </span>
+            )}
+            {isViewer && (
+              <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                👁️ View Only
               </span>
             )}
             {isOnline && pendingChanges.size > 0 && (
@@ -563,26 +606,51 @@ export default function MyEditor() {
             )}
           </div>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={!isDirty || saving}
-          className={`px-4 py-2 rounded-md font-medium transition-colors ${
-            isDirty && !saving
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {saving ? 'Saving...' : isDirty ? 'Save' : 'Saved'}
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleSave}
+            disabled={!isDirty || saving || isViewer}
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+              isDirty && !saving && !isViewer
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {saving ? 'Saving...' : isDirty ? 'Save' : 'Saved'}
+          </button>
+          
+          <button
+            onClick={() => setShowShareDialog(true)}
+            disabled={isViewer} // Disable share button for viewers
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+              !isViewer
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Share
+          </button>
+        </div>
       </div>
       <div className="flex-1 min-h-0">
-        <BlockNoteView key={key} editor={editor} />
+        <BlockNoteView 
+          key={key} 
+          editor={editor} 
+          editable={!isViewer} // Disable editing for viewers
+        />
       </div>
       {isDirty && (
         <div className="text-xs text-orange-500 p-2 bg-orange-50 border-t">
           ⚠️ You have unsaved changes. {!isOnline && "Working offline - changes saved locally."}
         </div>
       )}
+      
+      <ShareDialog
+        isOpen={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        documentId={currentDocId}
+        documentTitle={title}
+      />
     </div>
   );
 }

@@ -13,6 +13,8 @@
     "@blocknote/core": "^0.33.0",
     "@blocknote/mantine": "^0.33.0",
     "@blocknote/react": "^0.33.0",
+    "@liveblocks/react": "^3.1.4",
+    "@liveblocks/yjs": "^3.1.4",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
     "firebase": "^11.10.0",
@@ -20,7 +22,8 @@
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.7.0"
+    "react-router-dom": "^7.7.0",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

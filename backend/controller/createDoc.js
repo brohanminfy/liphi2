@@ -23,8 +23,9 @@ const createDoc = async (req, res) => {
     });
 
     const newDoc = await docRef.get();
+    const documentData = { _id: docRef.id, ...newDoc.data() };
 
-    res.status(201).json({ id: docRef.id, ...newDoc.data() });
+    res.status(201).json({ document: documentData });
   } catch (err) {
     console.error('Error creating document:', err);
     res.status(500).json({ error: 'Failed to create document' });
