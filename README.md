@@ -106,12 +106,3 @@ npm run dev
 - **Backend:** `.env` for secrets, Firebase config, and port
 - **Frontend:** `.env` for Vite/Firebase config (if needed)
 
----
-
-## License
-MIT
-
----
-
-## Contact
-For questions or support, open an issue or contact the maintainer. 
