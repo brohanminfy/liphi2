@@ -2,7 +2,6 @@
 node_modules
 
 fireadmin.json
-serviceAccount.json
 # output
 out
 dist

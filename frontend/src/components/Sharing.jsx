@@ -148,9 +148,9 @@ const ShareModal = ({ isOpen, onClose, document }) => {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-secondary-700 dark:text-primary-200 mb-2">Role</label>
                   <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-3 py-2 border border-primary-300 dark:border-secondary-600 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white">
-                    <option value="viewer">Viewer </option>
-                    <option value="editor">Editor</option>
-                    <option value="admin">Admin </option>
+                    <option value="viewer">Viewer - Can only view</option>
+                    <option value="editor">Editor - Can view and edit</option>
+                    <option value="admin">Admin - Can view, edit, and share</option>
                   </select>
                 </div>
                 <button type="submit" disabled={loading || !email.trim()} className="w-full bg-secondary-700 text-white py-2 px-4 rounded-md hover:bg-secondary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
@@ -161,7 +161,7 @@ const ShareModal = ({ isOpen, onClose, document }) => {
             )}
 
             <div>
-              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Access list</h3>
+              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Current Access</h3>
               {loading && permissions.permissions.length === 0 ? (
                 <div className="text-center py-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-secondary-700 mx-auto"></div></div>
               ) : (
