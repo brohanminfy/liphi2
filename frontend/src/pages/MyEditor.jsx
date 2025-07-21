@@ -479,7 +479,7 @@ export function DocumentEditor({ documentId, onTitleUpdate, suppressLoading }) {
             {/* Owner Username Display (small, above editor) */}
             {ownerName && (
               <div className="w-full flex justify-end mb-1 pr-2">
-                <span className="text-xs text-gray-400 italic">Owner: {ownerName}</span>
+                <span className="text-xs text-gray-400 italic">Author: {ownerName}</span>
               </div>
             )}
             {/* Header */}

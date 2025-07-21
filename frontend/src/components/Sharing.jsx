@@ -177,7 +177,7 @@ const ShareModal = ({ isOpen, onClose, document }) => {
                           <p className="text-xs text-secondary-600 dark:text-primary-300">{permissions.owner.email || 'Document Owner'}</p>
                         </div>
                       </div>
-                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700">Owner</span>
+                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700">Author</span>
                     </div>
                   )}
                   {permissions.permissions.map((perm) => (
