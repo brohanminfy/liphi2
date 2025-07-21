@@ -425,8 +425,21 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+        <div className="flex flex-col items-center">
+          <div className="relative flex items-center justify-center">
+            <span className="block w-16 h-16 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-400 opacity-20 absolute animate-pulse" />
+            <svg className="animate-spin h-12 w-12 text-indigo-500 drop-shadow-lg" viewBox="0 0 50 50">
+              <circle className="opacity-20" cx="25" cy="25" r="20" stroke="currentColor" strokeWidth="6" fill="none" />
+              <circle className="" cx="25" cy="25" r="20" stroke="currentColor" strokeWidth="6" fill="none" strokeDasharray="31.4 94.2" />
+            </svg>
+          </div>
+          <div className="mt-6 text-lg text-indigo-700 font-medium tracking-wide animate-fadeInSlow">Loading your document...</div>
+        </div>
+        <style>{`
+          @keyframes fadeInSlow { from { opacity: 0; } to { opacity: 1; } }
+          .animate-fadeInSlow { animation: fadeInSlow 0.8s ease; }
+        `}</style>
       </div>
     );
   }
@@ -449,13 +462,28 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
     );
   }
 
+  // Find the owner (first admin) username
+  let ownerName = '';
+  if (document && document.roles && document.members && document.members.length > 0) {
+    const firstAdminId = document.members.find(uid => document.roles[uid] === 'admin');
+    if (firstAdminId) {
+      const ownerUser = documentUsers.find(u => u.id === firstAdminId);
+      ownerName = ownerUser ? (ownerUser.name || ownerUser.email || `User ${ownerUser.id.slice(-4)}`) : '';
+    }
+  }
   return (
     <div className="flex h-screen">
       <div className="flex-1 flex flex-col">
         <div className="flex-1 overflow-hidden">
-          <div className="w-full max-w-screen-lg mx-auto py-4 h-full">
+          <div className="w-full max-w-screen-lg mx-auto pt-2 h-full">
+            {/* Owner Username Display (small, above editor) */}
+            {ownerName && (
+              <div className="w-full flex justify-end mb-1 pr-2">
+                <span className="text-xs text-gray-400 italic">Owner: {ownerName}</span>
+              </div>
+            )}
             {/* Header */}
-            <div className="flex items-center justify-end mb-6 h-10">
+            <div className="flex items-center justify-end mb-2 h-10">
               <div className="flex items-center space-x-4">
                 {/* Active Users Display */}
               
@@ -476,7 +504,7 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
             </div>
 
             {/* Document Editor */}
-            <div className="bg-white rounded-lg shadow border border-neutral-200">
+            <div className="bg-white rounded-lg shadow border border-neutral-200 flex flex-col h-[85vh] max-h-[85vh]">
               <div className="flex items-center justify-between border-b border-neutral-200 p-6">
                 <input
                   type="text"
@@ -487,16 +515,16 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
                   disabled={!isEditable}
                 />
               </div>
-              <div className="flex-1 min-h-0 p-6 bg-white">
+              <div className="flex-1 min-h-0 p-6 bg-white overflow-y-auto">
                 <BlockNoteView
-                  className="min-h-[500px] bg-white"
+                  className="min-h-[600px] bg-white"
                   editor={editor}
                   editable={isEditable}
                   theme="light"
                   style={{
-                    minHeight:"50vh",
-                    maxheight:"none",
-                    overflow:"visible"
+                    minHeight: "80vh",
+                    maxHeight: "80vh",
+                    overflow: "visible"
                   }}
                   onError={(error) => {
                     console.warn('BlockNote error:', error);
