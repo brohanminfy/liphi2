@@ -148,9 +148,9 @@ const ShareModal = ({ isOpen, onClose, document }) => {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-secondary-700 dark:text-primary-200 mb-2">Role</label>
                   <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full px-3 py-2 border border-primary-300 dark:border-secondary-600 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white">
-                    <option value="viewer">Viewer - Can only view</option>
-                    <option value="editor">Editor - Can view and edit</option>
-                    <option value="admin">Admin - Can view, edit, and share</option>
+                    <option value="viewer">Viewer </option>
+                    <option value="editor">Editor</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </div>
                 <button type="submit" disabled={loading || !email.trim()} className="w-full bg-secondary-700 text-white py-2 px-4 rounded-md hover:bg-secondary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center">
@@ -161,22 +161,38 @@ const ShareModal = ({ isOpen, onClose, document }) => {
             )}
 
             <div>
-              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Current Access</h3>
+              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Access list</h3>
               {loading && permissions.permissions.length === 0 ? (
                 <div className="text-center py-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-secondary-700 mx-auto"></div></div>
               ) : (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-2">
                   {permissions.owner && (
-                    <div className="flex items-center justify-between p-3 bg-primary-50 dark:bg-secondary-700 rounded-lg">
-                      <div className="flex items-center"><div className="flex items-center mr-3">{getRoleIcon('owner')}</div><div><p className="font-medium text-secondary-900 dark:text-white">{permissions.owner.name}</p><p className="text-sm text-secondary-600 dark:text-primary-300">Document Owner</p></div></div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor('owner')}`}>Owner</span>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-200 font-bold text-base">
+                          {permissions.owner.name?.[0]?.toUpperCase() || 'O'}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-secondary-900 dark:text-white flex items-center gap-1">{permissions.owner.name} <Crown className="inline h-4 w-4 text-yellow-500 ml-1" /></p>
+                          <p className="text-xs text-secondary-600 dark:text-primary-300">{permissions.owner.email || 'Document Owner'}</p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700">Owner</span>
                     </div>
                   )}
                   {permissions.permissions.map((perm) => (
-                    <div key={perm.userId} className="flex items-center justify-between p-3 bg-primary-50 dark:bg-secondary-700 rounded-lg">
-                      <div className="flex items-center"><div className="flex items-center mr-3">{getRoleIcon(perm.role)}</div><div><p className="font-medium text-secondary-900 dark:text-white">{perm.name}</p><p className="text-sm text-secondary-600 dark:text-primary-300">{perm.email}</p></div></div>
+                    <div key={perm.userId} className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-secondary-800 border border-primary-100 dark:border-secondary-700 shadow-sm hover:bg-primary-50 dark:hover:bg-secondary-700 transition">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary-200 dark:bg-secondary-700 text-secondary-900 dark:text-white font-bold text-base">
+                          {perm.name?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-medium text-secondary-900 dark:text-white">{perm.name}</p>
+                          <p className="text-xs text-secondary-600 dark:text-primary-300">{perm.email}</p>
+                        </div>
+                      </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(perm.role)}`}>{perm.role}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getRoleColor(perm.role)}`}>{perm.role.charAt(0).toUpperCase() + perm.role.slice(1)}</span>
                         {canShare && (
                           <button onClick={() => setUserToRemove(perm)} className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" title="Remove access">
                             <Trash2 className="h-4 w-4" />
