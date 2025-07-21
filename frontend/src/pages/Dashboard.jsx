@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, FileText, Trash2, Edit, User, Eye, AlertTriangle, LogOut, Crown } from 'lucide-react';
 import { documentApi } from '../services/api';
 import { auth } from '../config/firebase';
-import { DocumentEditor } from './Editor';
+import { DocumentEditor } from './MyEditor';
 import { YDocProvider } from '@y-sweet/react';
 import ThemeToggle from '../components/Theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,7 +17,7 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const subscribe = auth.onAuthStateChanged(user => {
       if (user) {
         setCurrentUser(user);
         loadDocuments();
@@ -26,7 +26,7 @@ const Dashboard = () => {
         setError("Please log in to view your documents.");
       }
     });
-    return () => unsubscribe();
+    return () => subscribe();
   }, []);
 
   const loadDocuments = async () => {
@@ -117,7 +117,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            My Docs
+            liphi
           </h2>
           <button
             onClick={handleCreateDocument}

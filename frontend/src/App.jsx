@@ -2,10 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 // import Home from './pages/Home'; // Remove Home import
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Login from './pages/SignIn';
+import Register from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
-import Editor from './pages/Editor';
+import Editor from './pages/MyEditor';
 
 function App() {
   return (
