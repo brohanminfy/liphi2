@@ -355,9 +355,7 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
     // Listen for document changes
     editor.onChange(handleChange);
 
-    return () => {
-      // Cleanup if needed
-    };
+    
   }, [editor, isEditable]);
   // Save function for title updates
   const handleSave = async (data = {}) => {
@@ -495,9 +493,15 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
                   editor={editor}
                   editable={isEditable}
                   theme="light"
+                  style={{
+                    minHeight:"50vh",
+                    maxheight:"none",
+                    overflow:"visible"
+                  }}
                   onError={(error) => {
                     console.warn('BlockNote error:', error);
                   }}
+
                 >
                   <SuggestionMenuController
                     triggerCharacter={"@"}
@@ -525,9 +529,9 @@ export function DocumentEditor({ documentId, onTitleUpdate }) {
 }
 
 // Add Editor wrapper for default export
-function Editor() {
+function MyEditor() {
   // This is a placeholder. You can customize or remove if not needed.
   return <div style={{textAlign: 'center', marginTop: '2rem'}}>Open a document from the dashboard to start editing.</div>;
 }
 
-export default Editor;
+export default MyEditor;
