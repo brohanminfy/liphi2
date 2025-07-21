@@ -7,13 +7,15 @@ import ThemeToggle from "../components/Theme";
 const colors = ['#1f2937', 'red', 'blue', 'green', 'orange'];
 const fonts = ['sans-serif', 'serif', 'monospace', 'cursive'];
 
-const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const Register = () => {
+  const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   // Style states
@@ -42,7 +44,6 @@ const Login = () => {
     ${textStyles.italic ? 'italic' : ''}
     ${textStyles.strike ? 'line-through' : ''}
   `;
-
   const inlineStyle = {
     color: textStyles.color,
     fontFamily: textStyles.font,
@@ -51,12 +52,17 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      await register(userName, email, password);
+      navigate('/dashboard');
     } catch (error) {
-      setError(error.message || "Failed to login");
+      setError(error.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
@@ -64,11 +70,11 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#f7f8fa] to-[#e4e7eb] flex items-center justify-center px-4 py-16">
-      {/* Overlay Spinner */}
+      {/* Overlay Loading Spinner */}
       {loading && (
         <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-lg">
           <div className="animate-pulse text-gray-800 text-lg font-medium">
-            Logging in...
+            Creating your account...
           </div>
         </div>
       )}
@@ -98,7 +104,6 @@ const Login = () => {
             <s>S</s>
           </button>
         </div>
-
         <div className="flex items-center gap-2">
           <button
             onClick={cycleColor}
@@ -109,7 +114,6 @@ const Login = () => {
             Color
           </button>
         </div>
-
         <div className="flex items-center gap-2">
           <button
             onClick={cycleFont}
@@ -122,13 +126,13 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Login Card */}
+      {/* Signup Card */}
       <div className="w-full max-w-md bg-white shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10">
         <h2 className={`text-3xl text-center mb-2 ${styleClass}`} style={inlineStyle}>
-          <span className="text-4xl">Liphi</span>
+          Liphi
         </h2>
         <p className={`text-sm text-center mb-6 ${styleClass}`} style={inlineStyle}>
-          <span className="text-lg">Sign in to your account</span>
+          Create a free account to get started
         </p>
 
         {error && (
@@ -139,25 +143,47 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4" style={inlineStyle}>
           <div>
-            <label className={`block text-lg mb-1 ${styleClass}`}>Email address</label>
+            <label className={`block text-sm mb-1 ${styleClass}`}>Username</label>
+            <input
+              type="text"
+              value={userName}
+              onChange={e => setUserName(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+              placeholder="Your username"
+            />
+          </div>
+          <div>
+            <label className={`block text-sm mb-1 ${styleClass}`}>Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full px-5 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none text-lg"
-              placeholder="Enter your email"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+              placeholder="example@gmail.com"
             />
           </div>
           <div>
-            <label className={`block text-lg mb-1 ${styleClass}`}>Password</label>
+            <label className={`block text-sm mb-1 ${styleClass}`}>Password</label>
             <input
-              type={showPassword ? "text" : "password"}
+              type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full px-5 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none text-lg"
-              placeholder="Enter your password"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+              placeholder="••••••••"
+            />
+          </div>
+          <div>
+            <label className={`block text-sm mb-1 ${styleClass}`}>Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-500 focus:outline-none"
+              placeholder="••••••••"
             />
           </div>
           <button
@@ -169,14 +195,14 @@ const Login = () => {
                 : 'bg-black text-white hover:bg-white hover:text-black hover:border hover:border-black'}
             `}
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Signing Up...' : 'Create Account'}
           </button>
         </form>
 
         <p className={`text-sm text-center mt-6 ${styleClass}`} style={inlineStyle}>
-          Don’t have an account?{' '}
-          <Link to="/register" className="underline hover:text-black">
-            Sign up
+          Already have an account?{' '}
+          <Link to="/login" className="underline hover:text-black">
+            Log in
           </Link>
         </p>
       </div>
@@ -184,4 +210,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;
