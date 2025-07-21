@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { auth } from '../config/firebase';
-import { documentApi } from '../services/api';
+import { auth } from '../config/firebase.js';
+import { documentApi } from '../services/api.js';
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import { 
@@ -16,10 +16,10 @@ import {
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/mantine/style.css';
 import { ArrowLeft, Share2, CheckCircle, Clock, Loader2, Users } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/Layout.jsx';
 import ShareModal from '../components/Sharing.jsx';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import { useTheme } from '../contexts/ThemeContext.jsx';
 import { YDocProvider, useYDoc, useYjsProvider } from "@y-sweet/react";
 import {
   DefaultThreadStoreAuth,
