@@ -1,7 +1,7 @@
 # dependencies (bun install)
 node_modules
 
-./config/fireadmin.json
+fireadmin.json
 # output
 out
 dist
