@@ -7,7 +7,7 @@ import ThemeToggle from "../components/Theme";
 const colors = ['#1f2937', 'red', 'blue', 'green', 'orange'];
 const fonts = ['sans-serif', 'serif', 'monospace', 'cursive'];
 
-const SignIn = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -184,4 +184,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+export default Login;
