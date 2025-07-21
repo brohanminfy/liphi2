@@ -113,7 +113,7 @@ const Dashboard = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-100">
       {/* Sidebar */}
-      <aside className="w-72 bg-white border-r border-neutral-200 h-full flex-shrink-0 overflow-y-auto flex flex-col shadow-sm">
+      <aside className="w-72 bg-white border-r border-neutral-200 h-full flex-shrink-0 flex flex-col shadow-sm">
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -126,38 +126,41 @@ const Dashboard = () => {
             <Plus className="w-4 h-4 mr-1" /> New
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 py-4">
+        <div className="flex-1 px-2 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-blue-50">
           {loading ? (
             <div className="text-gray-400 text-center py-8">Loading...</div>
           ) : documents.length === 0 ? (
             <div className="text-gray-400 text-center py-8">No documents yet</div>
           ) : (
-            <ul className="space-y-1">
-              {documents.map((doc) => {
-                const userRole = currentUser ? doc.roles?.[currentUser.uid] : null;
-                const roleInfo = getRoleInfo(userRole);
-                return (
-                  <li
-                    key={doc.id}
-                    onClick={() => setSelectedDocId(doc.id)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition group ${selectedDocId === doc.id ? 'bg-neutral-200' : 'hover:bg-neutral-100'}`}
-                    title={doc.title || 'Untitled'}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="truncate font-medium text-gray-800">{doc.title || 'Untitled'}</span>
-                      <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${roleInfo.color} flex items-center gap-1`}>{roleInfo.icon}{roleInfo.text}</span>
-                    </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); setDocToDelete(doc); }}
-                      className="text-gray-400 hover:text-red-600 p-1 rounded"
-                      title="Delete document"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              {/* Admin Section */}
+              <SectionedDocs
+                title="Admin"
+                docs={documents.filter(doc => currentUser && doc.roles?.[currentUser.uid] === 'admin')}
+                selectedDocId={selectedDocId}
+                setSelectedDocId={setSelectedDocId}
+                setDocToDelete={setDocToDelete}
+                getRoleInfo={getRoleInfo}
+              />
+              {/* Editor Section */}
+              <SectionedDocs
+                title="Editor"
+                docs={documents.filter(doc => currentUser && doc.roles?.[currentUser.uid] === 'editor')}
+                selectedDocId={selectedDocId}
+                setSelectedDocId={setSelectedDocId}
+                setDocToDelete={setDocToDelete}
+                getRoleInfo={getRoleInfo}
+              />
+              {/* Viewer Section */}
+              <SectionedDocs
+                title="Viewer"
+                docs={documents.filter(doc => currentUser && doc.roles?.[currentUser.uid] === 'viewer')}
+                selectedDocId={selectedDocId}
+                setSelectedDocId={setSelectedDocId}
+                setDocToDelete={setDocToDelete}
+                getRoleInfo={getRoleInfo}
+              />
+            </>
           )}
         </div>
         {/* User info, theme toggle, and logout at the bottom */}
@@ -227,5 +230,35 @@ const Dashboard = () => {
     </div>
   );
 };
+
+function SectionedDocs({ title, docs, selectedDocId, setSelectedDocId, setDocToDelete, getRoleInfo }) {
+  if (!docs.length) return null;
+  return (
+    <div className="mb-4">
+      <div className="text-xs font-semibold text-gray-500 uppercase px-2 mb-1 tracking-wider">{title}</div>
+      <ul className="space-y-1">
+        {docs.map((doc) => (
+          <li
+            key={doc.id}
+            onClick={() => setSelectedDocId(doc.id)}
+            className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition group ${selectedDocId === doc.id ? 'bg-neutral-200' : 'hover:bg-neutral-100'}`}
+            title={doc.title || 'Untitled'}
+          >
+            <div className="flex items-center gap-2 truncate">
+              <span className="truncate font-medium text-gray-800">{doc.title || 'Untitled'}</span>
+            </div>
+            <button
+              onClick={e => { e.stopPropagation(); setDocToDelete(doc); }}
+              className="text-gray-400 hover:text-red-600 p-1 rounded"
+              title="Delete document"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default Dashboard;
