@@ -1,0 +1,311 @@
+openapi: 3.0.3
+info:
+  title: Liphi API
+  version: 1.0.0
+  description: |
+    REST API for Liphi collaborative documentation platform. All endpoints require a valid Firebase Bearer token.
+servers:
+  - url: http://localhost:3001/api
+    description: Local development server
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        roles:
+          type: object
+          additionalProperties:
+            type: string
+        members:
+          type: array
+          items:
+            type: string
+        comments:
+          type: array
+          items: {}
+        suggestions:
+          type: array
+          items: {}
+        createdByName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+    Permission:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+    PermissionsResponse:
+      type: object
+      properties:
+        owner:
+          $ref: '#/components/schemas/Permission'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    ShareRequest:
+      type: object
+      required:
+        - email
+        - role
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+    RemoveUserRequest:
+      type: object
+      required:
+        - userIdToRemove
+      properties:
+        userIdToRemove:
+          type: string
+    MembersInfoRequest:
+      type: object
+      required:
+        - userIds
+      properties:
+        userIds:
+          type: array
+          items:
+            type: string
+security:
+  - BearerAuth: []
+paths:
+  /notes:
+    get:
+      summary: List all documents for the authenticated user
+      tags: [Documents]
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+    post:
+      summary: Create a new document
+      tags: [Documents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+  /note/{id}:
+    get:
+      summary: Get a specific document
+      tags: [Documents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '403':
+          description: Access denied
+    put:
+      summary: Update a document
+      tags: [Documents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                roles:
+                  type: object
+                  additionalProperties:
+                    type: string
+                comments:
+                  type: array
+                  items: {}
+                suggestions:
+                  type: array
+                  items: {}
+      responses:
+        '200':
+          description: Document updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Access denied
+    delete:
+      summary: Delete a document
+      tags: [Documents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Only admins can delete
+  /note/{id}/access:
+    get:
+      summary: Get all users and their roles for a document
+      tags: [Permissions]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permissions info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsResponse'
+  /note/{id}/invite:
+    post:
+      summary: Share a document with another user
+      tags: [Permissions]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareRequest'
+      responses:
+        '200':
+          description: Document shared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /note/{id}/remove_user:
+    post:
+      summary: Remove a user's access to a document
+      tags: [Permissions]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveUserRequest'
+      responses:
+        '200':
+          description: User access removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /members/info:
+    post:
+      summary: Get user details for mentions
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembersInfoRequest'
+      responses:
+        '200':
+          description: List of user details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User' 
